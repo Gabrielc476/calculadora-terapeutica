@@ -24,6 +24,7 @@ export default function ConfiguracoesPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   // Form states
   const [cutoffDay, setCutoffDay] = useState(26);
@@ -41,6 +42,14 @@ export default function ConfiguracoesPage() {
       setPsychologyDuration(data.psychology_default_duration || DEFAULT_RATES.psychology_default_duration);
       setAtHourlyRate(data.at_hourly_rate || DEFAULT_RATES.at_hourly_rate);
       setUserName(data.name || '');
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
+          setUserEmail(user.email);
+        }
+      }
       setLoading(false);
     }
     load();
@@ -231,18 +240,45 @@ export default function ConfiguracoesPage() {
         <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
           Acesso & Sessão
         </h3>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-slate-700">Login e Autenticação</p>
-            <p className="text-[11px] text-slate-400">Gerencie sua sessão ou acesse por outro aparelho</p>
+        {userEmail ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
+                {userEmail.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                  <p className="text-xs font-bold text-slate-900 truncate">
+                    {userEmail}
+                  </p>
+                </div>
+                <p className="text-[11px] text-slate-400">Conta conectada na nuvem</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-xs font-semibold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 py-1.5 px-3 rounded-lg border border-rose-200 transition-colors shrink-0 flex items-center gap-1"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sair</span>
+            </button>
           </div>
-          <Link
-            href="/login"
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 py-1.5 px-3 rounded-lg border border-indigo-200 transition-colors"
-          >
-            Acessar Conta
-          </Link>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-700">Não autenticada</p>
+              <p className="text-[11px] text-slate-400">Faça login para sincronizar dados na nuvem</p>
+            </div>
+            <Link
+              href="/login"
+              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 py-1.5 px-3 rounded-lg border border-indigo-200 transition-colors"
+            >
+              Acessar Conta
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -269,7 +269,7 @@ export default function PacientesPage() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Duração Usual: <span className="text-indigo-600 font-bold">{formatDuration(duration)}</span>
                 </label>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-4 gap-1.5 mb-2">
                   {[45, 60, 90, 135].map((d) => (
                     <button
                       key={d}
@@ -284,6 +284,21 @@ export default function PacientesPage() {
                       {formatDuration(d)}
                     </button>
                   ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500">Ou digite:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={duration || ''}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setDuration(val > 0 ? val : 0);
+                    }}
+                    placeholder="Minutos"
+                    className="w-24 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-center"
+                  />
+                  <span className="text-xs text-slate-400">minutos</span>
                 </div>
               </div>
 

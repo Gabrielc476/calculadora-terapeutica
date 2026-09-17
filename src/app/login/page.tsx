@@ -38,8 +38,12 @@ export default function LoginPage() {
           password,
         });
         if (error) throw error;
-        setSuccessMessage('Conta criada com sucesso! Você já pode entrar.');
-        setIsSignUp(false);
+        if (data?.session) {
+          router.push('/');
+        } else {
+          setSuccessMessage('Conta criada com sucesso! Se a confirmação estiver ativa no Supabase, verifique sua caixa de entrada.');
+          setIsSignUp(false);
+        }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email,

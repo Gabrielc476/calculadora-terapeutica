@@ -43,6 +43,7 @@ export default function AttendanceSheet({
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [role, setRole] = useState<RoleType>('psicologa');
   const [durationMinutes, setDurationMinutes] = useState(45);
+  const [durationInput, setDurationInput] = useState<string>('45');
   const [type, setType] = useState<AttendanceType>('fixo');
   const [calculatedValue, setCalculatedValue] = useState(30);
   const [isManualValue, setIsManualValue] = useState(false);
@@ -57,6 +58,7 @@ export default function AttendanceSheet({
       setSelectedPatientId(editingAttendance.patient_id || null);
       setRole(editingAttendance.role);
       setDurationMinutes(editingAttendance.duration_minutes);
+      setDurationInput(String(editingAttendance.duration_minutes));
       setType(editingAttendance.type);
       setCalculatedValue(Number(editingAttendance.calculated_value));
       setIsManualValue(true);
@@ -69,6 +71,7 @@ export default function AttendanceSheet({
       setSelectedPatientId(null);
       setRole('psicologa');
       setDurationMinutes(45);
+      setDurationInput('45');
       setType('fixo');
       const val = calculateSessionValue('psicologa', 45, rates);
       setCalculatedValue(val);
@@ -94,6 +97,7 @@ export default function AttendanceSheet({
     setSelectedPatientId(p.id);
     setRole(p.default_role);
     setDurationMinutes(p.default_duration);
+    setDurationInput(String(p.default_duration));
     setType('fixo');
     setIsManualValue(false);
     const autoVal = calculateSessionValue(p.default_role, p.default_duration, rates);
@@ -107,9 +111,11 @@ export default function AttendanceSheet({
     if (newRole === 'psicologa') {
       const d = rates.psychology_default_duration || 45;
       setDurationMinutes(d);
+      setDurationInput(String(d));
       setCalculatedValue(calculateSessionValue('psicologa', d, rates));
     } else {
       setDurationMinutes(60);
+      setDurationInput('60');
       setCalculatedValue(calculateSessionValue('at', 60, rates));
     }
   };
@@ -117,6 +123,7 @@ export default function AttendanceSheet({
   // Alterar Duração
   const handleDurationPreset = (minutes: number) => {
     setDurationMinutes(minutes);
+    setDurationInput(String(minutes));
     setIsManualValue(false);
     setCalculatedValue(calculateSessionValue(role, minutes, rates));
   };
@@ -129,6 +136,12 @@ export default function AttendanceSheet({
       return;
     }
 
+    const finalMinutes = Number(durationInput) || durationMinutes;
+    if (finalMinutes <= 0) {
+      alert('Por favor, informe uma duração válida em minutos.');
+      return;
+    }
+
     onSave(
       {
         id: editingAttendance?.id,
@@ -136,7 +149,7 @@ export default function AttendanceSheet({
         patient_name: patientName.trim(),
         patient_id: selectedPatientId,
         role,
-        duration_minutes: durationMinutes,
+        duration_minutes: finalMinutes,
         type,
         calculated_value: Number(calculatedValue),
         notes: notes.trim() || undefined,
@@ -417,41 +430,49 @@ export default function AttendanceSheet({
               )}
             </div>
 
-            {/* Ajuste Fino (+/- 15 minutos) */}
+            {/* Campo livre de minutos & botões de ajuste rápido */}
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => {
-                  const next = Math.max(15, durationMinutes - 15);
+                  const current = Number(durationInput) || durationMinutes;
+                  const next = Math.max(1, current - 15);
                   handleDurationPreset(next);
                 }}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors active:scale-95"
+                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors active:scale-95"
               >
                 - 15 min
               </button>
 
-              <div className="flex-1 text-center">
+              <div className="flex-1 flex items-center justify-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
                 <input
                   type="number"
                   min="1"
-                  step="5"
-                  value={durationMinutes}
+                  placeholder="Ex: 45"
+                  value={durationInput}
                   onChange={(e) => {
-                    const val = Number(e.target.value);
-                    if (val > 0) handleDurationPreset(val);
+                    const raw = e.target.value;
+                    setDurationInput(raw);
+                    const parsed = Number(raw);
+                    if (!isNaN(parsed) && parsed > 0) {
+                      setDurationMinutes(parsed);
+                      setIsManualValue(false);
+                      setCalculatedValue(calculateSessionValue(role, parsed, rates));
+                    }
                   }}
-                  className="w-20 text-center bg-slate-50 border border-slate-200 rounded-lg py-1 text-xs font-bold text-slate-900"
+                  className="w-16 text-center text-sm font-bold text-slate-900 focus:outline-none bg-transparent"
                 />
-                <span className="text-[11px] text-slate-400 ml-1">min</span>
+                <span className="text-xs text-slate-500 font-medium">minutos</span>
               </div>
 
               <button
                 type="button"
                 onClick={() => {
-                  const next = durationMinutes + 15;
+                  const current = Number(durationInput) || durationMinutes;
+                  const next = current + 15;
                   handleDurationPreset(next);
                 }}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors active:scale-95"
+                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors active:scale-95"
               >
                 + 15 min
               </button>
